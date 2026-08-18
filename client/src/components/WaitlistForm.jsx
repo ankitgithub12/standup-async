@@ -5,7 +5,7 @@ import useCountUp from "../hooks/useCountUp";
 // once at build time. If the env var is missing, API calls will use a
 // relative URL (works if client and server share a domain, fails otherwise —
 // but that's the deployer's responsibility to configure).
-const API_URL = import.meta.env.VITE_API_URL || "";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function WaitlistForm() {
   const [email, setEmail] = useState("");
