@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ================================================================
+   DESIGN SYSTEM
+   Light theme = default. Dark theme = .dark class on <html>.
+   DECISION: Using CSS custom properties for theme colors so Tailwind
+   utilities AND custom styles can both reference the same values.
+   This avoids duplicating color definitions across the codebase.
+   ================================================================ */
+
+:root {
+  --color-bg: #faf9f7;
+  --color-bg-raised: #ffffff;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #5c5c5c;
+  --color-text-tertiary: #8a8a8a;
+  --color-border: #e5e2de;
+  --color-accent: #e85d26;
+  --color-accent-hover: #d14e1c;
+}
+
+.dark {
+  --color-bg: #111110;
+  --color-bg-raised: #1c1c1a;
+  --color-text-primary: #f0efe9;
+  --color-text-secondary: #a8a8a0;
+  --color-text-tertiary: #6e6e66;
+  --color-border: #2a2a28;
+}
+
+/* ================================================================
+   BASE STYLES
+   ================================================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* DECISION: Setting overflow-x: hidden on html to prevent any
+     horizontal scroll at narrow viewports. Belt-and-suspenders
+     approach alongside responsive max-widths. */
+  overflow-x: hidden;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ================================================================
+   LAYOUT
+   ================================================================ */
+
+.section-container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (min-width: 768px) {
+  .section-container {
+    padding: 0 40px;
+  }
+}
+
+/* ================================================================
+   KONAMI EASTER EGG — screen shake animation
+   ================================================================ */
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 50%, 90% { transform: translateX(-4px); }
+  30%, 70% { transform: translateX(4px); }
+}
+
+.shake {
+  animation: shake 0.5s ease-in-out;
+}
