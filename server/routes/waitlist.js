@@ -3,23 +3,86 @@ const Waitlist = require("../models/Waitlist");
 
 const router = express.Router();
 
-// DECISION: Using a simple regex for email validation instead of a library like
-// validator.js — one fewer dependency, and this regex covers real-world formats
-// without being overly strict. Easy to explain in an interview.
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Comprehensive email validation with typo detection
+const EMAIL_REGEX =
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
+const INVALID_TLD_TYPOS = [".cm", ".con", ".cmo", ".coom", ".comm", ".ocm"];
+
+const COMMON_DOMAIN_TYPOS = {
+  "gmai.com": "gmail.com",
+  "gamil.com": "gmail.com",
+  "gmial.com": "gmail.com",
+  "yaho.com": "yahoo.com",
+  "outlok.com": "outlook.com",
+  "hotmial.com": "hotmail.com",
+};
+
+function validateEmail(email) {
+  if (!email || typeof email !== "string") {
+    return { valid: false, error: "A valid email is required" };
+  }
+
+  const trimmed = email.trim().toLowerCase();
+
+  if (trimmed.length > 254 || trimmed.length < 5) {
+    return { valid: false, error: "Email must be between 5 and 254 characters" };
+  }
+
+  if (!EMAIL_REGEX.test(trimmed)) {
+    return { valid: false, error: "Please enter a valid email address" };
+  }
+
+  const [localPart, domain] = trimmed.split("@");
+  if (!localPart || !domain) {
+    return { valid: false, error: "Please enter a valid email address" };
+  }
+
+  if (
+    localPart.includes("..") ||
+    localPart.startsWith(".") ||
+    localPart.endsWith(".")
+  ) {
+    return { valid: false, error: "Invalid email format" };
+  }
+
+  const domainParts = domain.split(".");
+  const tld = domainParts[domainParts.length - 1];
+
+  if (!/^[a-zA-Z]{2,24}$/.test(tld)) {
+    return { valid: false, error: "Invalid domain extension" };
+  }
+
+  const lastDotExt = "." + tld;
+  if (INVALID_TLD_TYPOS.includes(lastDotExt)) {
+    return {
+      valid: false,
+      error: `Did you mean .com? Please check "${lastDotExt}" in your email`,
+    };
+  }
+
+  if (COMMON_DOMAIN_TYPOS[domain]) {
+    return {
+      valid: false,
+      error: `Did you mean @${COMMON_DOMAIN_TYPOS[domain]}?`,
+    };
+  }
+
+  return { valid: true, email: trimmed };
+}
 
 // POST /api/waitlist — add an email to the waitlist
 router.post("/", async (req, res) => {
   try {
     const { email } = req.body;
 
-    // Validate: email must exist and match format
-    if (!email || !EMAIL_REGEX.test(email)) {
-      return res.status(400).json({ error: "A valid email is required" });
+    const validation = validateEmail(email);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error });
     }
 
-    // Attempt to create the entry
-    await Waitlist.create({ email });
+    // Attempt to create the entry with sanitized email
+    await Waitlist.create({ email: validation.email });
     return res.status(201).json({ message: "You're on the list" });
   } catch (err) {
     // DECISION: Catching Mongoose duplicate key error (code 11000) separately

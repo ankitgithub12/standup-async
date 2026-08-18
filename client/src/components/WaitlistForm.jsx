@@ -9,6 +9,73 @@ const API_URL =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV ? "http://localhost:5000" : "");
 
+const EMAIL_REGEX =
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
+const INVALID_TLD_TYPOS = [".cm", ".con", ".cmo", ".coom", ".comm", ".ocm"];
+
+const COMMON_DOMAIN_TYPOS = {
+  "gmai.com": "gmail.com",
+  "gamil.com": "gmail.com",
+  "gmial.com": "gmail.com",
+  "yaho.com": "yahoo.com",
+  "outlok.com": "outlook.com",
+  "hotmial.com": "hotmail.com",
+};
+
+function validateEmail(email) {
+  if (!email || typeof email !== "string") {
+    return { valid: false, error: "A valid email is required" };
+  }
+
+  const trimmed = email.trim().toLowerCase();
+
+  if (trimmed.length > 254 || trimmed.length < 5) {
+    return { valid: false, error: "Email must be between 5 and 254 characters" };
+  }
+
+  if (!EMAIL_REGEX.test(trimmed)) {
+    return { valid: false, error: "Please enter a valid email address" };
+  }
+
+  const [localPart, domain] = trimmed.split("@");
+  if (!localPart || !domain) {
+    return { valid: false, error: "Please enter a valid email address" };
+  }
+
+  if (
+    localPart.includes("..") ||
+    localPart.startsWith(".") ||
+    localPart.endsWith(".")
+  ) {
+    return { valid: false, error: "Invalid email format" };
+  }
+
+  const domainParts = domain.split(".");
+  const tld = domainParts[domainParts.length - 1];
+
+  if (!/^[a-zA-Z]{2,24}$/.test(tld)) {
+    return { valid: false, error: "Invalid domain extension" };
+  }
+
+  const lastDotExt = "." + tld;
+  if (INVALID_TLD_TYPOS.includes(lastDotExt)) {
+    return {
+      valid: false,
+      error: `Did you mean .com? Please check "${lastDotExt}" in your email`,
+    };
+  }
+
+  if (COMMON_DOMAIN_TYPOS[domain]) {
+    return {
+      valid: false,
+      error: `Did you mean @${COMMON_DOMAIN_TYPOS[domain]}?`,
+    };
+  }
+
+  return { valid: true, email: trimmed };
+}
+
 function WaitlistForm() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | submitting | success | already | error
@@ -32,13 +99,21 @@ function WaitlistForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const validation = validateEmail(email);
+    if (!validation.valid) {
+      setStatus("error");
+      setMessage(validation.error);
+      return;
+    }
+
     setStatus("submitting");
 
     try {
       const res = await fetch(`${API_URL}/api/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: validation.email }),
       });
 
       const data = await res.json();
