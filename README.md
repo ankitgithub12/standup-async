@@ -4,7 +4,88 @@
 
 ---
 
-## Local Setup
+## 🌐 Live URLs
+
+- **Frontend App (Vercel):** [https://standup-async.vercel.app](https://standup-async.vercel.app)
+- **Backend API (Render):** [https://standup-async-backend.onrender.com](https://standup-async-backend.onrender.com)
+- **API Health Check:** [https://standup-async-backend.onrender.com/api/health](https://standup-async-backend.onrender.com/api/health)
+- **Waitlist Count Endpoint:** [https://standup-async-backend.onrender.com/api/waitlist/count](https://standup-async-backend.onrender.com/api/waitlist/count)
+
+> **Note on Render Free Tier:** The backend spins down after ~15 minutes of inactivity. The first request after idle takes **30–50 seconds** to cold-start.
+
+---
+
+## 🚀 API Documentation
+
+Base URL: `https://standup-async-backend.onrender.com`
+
+### 1. Root Status
+* **Endpoint:** `GET /`
+* **Description:** Returns API status and overview of available endpoints.
+* **Response (200 OK):**
+```json
+{
+  "name": "Standup Async Waitlist API",
+  "status": "online",
+  "endpoints": {
+    "health": "/api/health",
+    "waitlist_count": "/api/waitlist/count",
+    "join_waitlist": "POST /api/waitlist"
+  }
+}
+```
+
+### 2. Health Check
+* **Endpoint:** `GET /api/health`
+* **Description:** Used by monitoring tools and Render to verify service health.
+* **Response (200 OK):**
+```json
+{
+  "status": "ok"
+}
+```
+
+### 3. Get Waitlist Count
+* **Endpoint:** `GET /api/waitlist/count`
+* **Description:** Fetches total number of waitlist signups.
+* **Response (200 OK):**
+```json
+{
+  "count": 4
+}
+```
+
+### 4. Join Waitlist
+* **Endpoint:** `POST /api/waitlist`
+* **Headers:** `Content-Type: application/json`
+* **Request Body:**
+```json
+{
+  "email": "user@example.com"
+}
+```
+* **Success Response (201 Created):**
+```json
+{
+  "message": "You're on the list"
+}
+```
+* **Already Subscribed Response (200 OK):**
+```json
+{
+  "message": "You've already joined"
+}
+```
+* **Validation Error (400 Bad Request):**
+```json
+{
+  "error": "Please enter a valid email address"
+}
+```
+
+---
+
+## 💻 Local Setup
 
 ### Prerequisites
 
@@ -27,7 +108,7 @@ cp .env.example .env
 cd ../client
 npm install
 cp .env.example .env
-# Edit .env → set VITE_API_URL=http://localhost:5000
+# Edit .env → set VITE_API_URL=http://localhost:5000 (or your deployed backend URL)
 ```
 
 ### 2. Start the server
@@ -50,7 +131,7 @@ Client starts on `http://localhost:5173` (Vite default).
 
 ---
 
-## Deployment
+## ☁️ Deployment
 
 ### Client → Vercel
 
@@ -58,7 +139,7 @@ Client starts on `http://localhost:5173` (Vite default).
 2. Import the project in [Vercel](https://vercel.com).
 3. Set **Root Directory** to `client`.
 4. Set the environment variable:
-   - `VITE_API_URL` = your deployed server URL (e.g. `https://standup-api.onrender.com`)
+   - `VITE_API_URL` = `https://standup-async-backend.onrender.com`
 5. Deploy.
 
 ### Server → Render
@@ -72,18 +153,16 @@ Client starts on `http://localhost:5173` (Vite default).
    - `PORT` = `5000`
 6. Deploy.
 
-> **Note on Render free tier:** The server spins down after ~15 minutes of inactivity. First request after idle takes **30–50 seconds** to cold-start. This is expected and not a bug.
-
 ### Database → MongoDB Atlas
 
 1. Create a free M0 cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas).
 2. Create a database user with read/write permissions.
-3. Whitelist `0.0.0.0/0` for access from Render (or add Render's static IPs).
+3. Whitelist `0.0.0.0/0` for access from Render.
 4. Copy the connection string into your server's `MONGO_URI` env var.
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 standup/
@@ -100,7 +179,7 @@ standup/
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Layer    | Tech                        |
 |----------|-----------------------------|

@@ -21,6 +21,19 @@ app.use(express.json());
 
 app.use("/api/waitlist", waitlistRoutes);
 
+// Root route — friendly API status and available endpoints
+app.get("/", (req, res) => {
+  res.json({
+    name: "Standup Async Waitlist API",
+    status: "online",
+    endpoints: {
+      health: "/api/health",
+      waitlist_count: "/api/waitlist/count",
+      join_waitlist: "POST /api/waitlist"
+    }
+  });
+});
+
 // Health check — useful for Render deploy verification
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
